@@ -7,7 +7,10 @@ var passportHttp = require("passport-http");
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
 
-//Nodemailer
+router.use(passport.initialize());
+router.use(passport.session());
+
+/* ---------------------NODEMAILER--------------------------*/
 var smtpTransport = nodemailer.createTransport("SMTP",{
     service: "Gmail",  // sets automatically host, port and connection security settings
     auth: {
@@ -16,6 +19,8 @@ var smtpTransport = nodemailer.createTransport("SMTP",{
     }
 });
 
+
+/* ---------------------FUNCTIONS--------------------------*/
 function sendEmail (email,link,meno,priezvisko)
 {
 
@@ -61,17 +66,45 @@ function getUniqueRandomId() { // Kontrola na jedinecne ID verify email
     return randomId;
 }
 
-//PASSPORT LOCAL
-passport.use(new passportLocal.Strategy(function(username,password,done)
+passport.serializeUser(function(user,done)
 {
+    console.log(user);
+    done(null,user);
+});
+passport.deserializeUser(function(user,done)
+{
+    console.log("deserialize "+user);
+    done(null,{email: user.email,meno: user.meno, priezvisko: user.priezvisko});
+});
+/* ---------------------PASSPORT LOCAL--------------------------*/
+passport.use(new passportLocal.Strategy({usernameField: "email", passwordField: "password"},function(email,password,done)
+{
+    mongoose.model('uzivatelia').find({email: email, heslo: password },function(err,user)
+    {
+
+        if (user.length) // Ak je prihlasenie uspesne
+        {
+            if (user[0].verifiedEmail) // Ak uz presla verifikacia
+            {
+                 done(null,{email: email, meno: user[0].meno, priezvisko: user[0].priezvisko});
+
+            }
+            else done(null,false, {message: "Nepotvrdili ste este svoj e-mail!"});
+        }
+        else // FAIL
+        {
+             done(null,null);
+        }
+    });
 
 }));
-//PASSPORT HTTP
+/* ---------------------PASSPORT HTTP--------------------------*/
 passport.use(new passportHttp.BasicStrategy(function(username,password,done)
 {
 
 }));
-//MONGOOSE
+
+/* ---------------------MONGOOSE --------------------------*/
 var schema = mongoose.Schema({ // Schema tabulky
     meno: String,
     priezvisko: String,
@@ -81,13 +114,14 @@ var schema = mongoose.Schema({ // Schema tabulky
     verifiedEmail: Boolean
 });
 
-var Users = mongoose.model('uzivatelia',schema,"uzivatelia");
+var Users = mongoose.model('uzivatelia',schema,"uzivatelia"); // DB Schema
 
 
 
-//ROUTES
+/* ---------------------ROUTES --------------------------*/
 router.get('/',function(req,res) // Prihlasenie
 {
+    console.log(req.user);
    res.render('index',{
        authenticated: req.isAuthenticated(),
        user: req.user,
@@ -95,21 +129,36 @@ router.get('/',function(req,res) // Prihlasenie
    });
 });
 
+/* ---------------------GET-REGISTRATION--------------------------*/
 router.get('/registration',function(req,res) // Registracia
 {
    res.render('registration');
 });
 
+/* ---------------------GET-VERIFY-EMAIL--------------------------*/
 router.get('/verify',function(req,res)
 {
-    var id = req.query.id
+
     mongoose.model('uzivatelia').find({emailId: req.query.id},function(err,users)
     {
+        if (users.length)
+        {
+            Users.findOne({ emailId: req.query.id }, function (err, doc) { // Hladame podla ID v DB uzivatela
 
+                doc.verifiedEmail = true;
+                doc.save();
+                res.write("<script>alert('Verifikacia prebehla uspesne,mozete sa prihlasit!');window.location='/'</script>");
+
+
+            })
+
+        }
+        else res.send(404);
     });
 
 });
 
+/* ---------------------POST-REGISTRATION--------------------------*/
 router.post('/registration',function(req,res) // Spracovanie registracie
 {
 
@@ -118,7 +167,7 @@ router.post('/registration',function(req,res) // Spracovanie registracie
 
       if (users.length)//Ak uz je v DB
       {
-          res.write("<script>alert('E-mailova adresa uz existuje!');</script>");
+          res.write("<script>alert('E-mailova adresa uz existuje!');window.location='/registration'</script>");
           console.log("E-mail uz je v DB");
       }
 
@@ -143,16 +192,32 @@ router.post('/registration',function(req,res) // Spracovanie registracie
               data.save(function (err) {
                   if (!err) {
                       console.log("Saved");
-                      res.write("<script>alert('Uspesne ulozene v DB');</script>");
+                      res.write("<script>alert('Registraciu dokoncite potvrdenim verifikacneho e-mailu!');window.location='/';</script>");
+
+
                   }
                   else console.log("Error");
               });
           }
           else
           {
-             console.log("Hesla sa nezhoduju");
+
+              res.write("<script>alert('Hesla sa nezhoduju!');window.location='/registration';</script>");
           }
       }
    });
+
+});
+
+router.get('/logout',function(req,res)
+{
+    req.logout();
+    res.redirect("/");
+})
+/* ---------------------POST-LOGIN--------------------------*/
+router.post('/',passport.authenticate("local"),function(req,res)
+{
+    console.log("dss");
+    res.redirect("/");
 });
 module.exports = router;

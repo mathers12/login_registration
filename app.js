@@ -6,7 +6,6 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var expressSession = require('express-session');
 var routes = require('./routes/index');
-var users = require('./routes/users');
 var mongoose = require('mongoose');
 var passport = require('passport');
 var passportLocal = require('passport-local');
@@ -39,7 +38,6 @@ app.use(expressSession({
     saveUninitialized: false
 }));
 app.use('/', routes);
-app.use('/users', users);
 
 
 
@@ -79,5 +77,5 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-
+//passport.use(new passportLocal.Strategy(function()))
 module.exports = app;

@@ -11,27 +11,25 @@
   <body>
 
   <% if (authenticated){%>
-  <p>Hello, <%= user.name%></p>
+  <p>Vitame Vas pan, <%= user.meno+" "+user.priezvisko%></p>
+  <a href="/logout">Odhlasit sa!</a>
   <%}else{%>
-  <form action="/login" name="login" method="post">
+  <form action="" name="login" method="post">
       <table>
         <td>E-mail</td>
-              <td><input type="email" name="email"></td>
+              <td><input type="email" name="email" required></td>
           </tr><br>
 
           <tr>
               <td>Heslo</td>
-              <td><input type="password" name="heslo"></td>
+              <td><input type="password" name="password" required></td>
           </tr><br>
           <tr>
-              <td><input type="submit" value="Prihlásiť sa"></td>
+              <td><input type="submit" value="Prihlásiť sa" ></td>
           </tr>
       </table>
   </form>
 <p>Ešte nemáte účet vytvorený? <a href="/registration">Zaregistrujte sa</a></p>
-  <%}%>
-  <%if (success){%>
-  <% alert("Verifikacia prebehla uspesne. Teraz sa mozte prihlasit!")%>
-  <%}%>
+<%}%>
   </body>
 </html>
