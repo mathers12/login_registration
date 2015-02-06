@@ -12,6 +12,7 @@ var passport = require('passport');
 var passportLocal = require('passport-local');
 var passportHttp = require('passport-http');
 var app = express();
+var partials = require('express-partials');
 
 //NODEMAILER
 
@@ -30,6 +31,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(partials());
 app.use(expressSession({
 
     secret: process.env.SESSION_SECRET || 'secret',
