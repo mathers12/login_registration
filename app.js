@@ -17,7 +17,7 @@ var partials = require('express-partials');
 
 
 //Mongoose (MongoDB)
-mongoose.connect('mongodb://127.0.0.1:27017/ina');
+mongoose.connect('mongodb://127.0.0.1:27017/nieco');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

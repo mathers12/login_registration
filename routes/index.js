@@ -6,10 +6,11 @@ var passportLocal = require('passport-local');
 var passportHttp = require("passport-http");
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
+var flash = require('connect-flash');
 
 router.use(passport.initialize());
 router.use(passport.session());
-
+router.use(flash());
 /* ---------------------NODEMAILER--------------------------*/
 var smtpTransport = nodemailer.createTransport("SMTP",{
     service: "Gmail",  // sets automatically host, port and connection security settings
@@ -81,19 +82,24 @@ passport.use(new passportLocal.Strategy({usernameField: "email", passwordField: 
 {
     mongoose.model('uzivatelia').find({email: email, heslo: password },function(err,user)
     {
-
+    console.log("V PASSPORT LOCAL");
         if (user.length) // Ak je prihlasenie uspesne
         {
             if (user[0].verifiedEmail) // Ak uz presla verifikacia
             {
+                console.log("Tu sme");
                  done(null,{email: email, meno: user[0].meno, priezvisko: user[0].priezvisko});
 
             }
-            else done(null,false, {message: "Nepotvrdili ste este svoj e-mail!"});
+            else
+            {
+                console.log("NEVERIFIKOVANE");
+                return done(null,false);
+            }
         }
         else // FAIL
         {
-             done(null,null);
+             done(null,false);
         }
     });
 
@@ -217,7 +223,6 @@ router.get('/logout',function(req,res)
 /* ---------------------POST-LOGIN--------------------------*/
 router.post('/',passport.authenticate("local"),function(req,res)
 {
-    console.log("dss");
-    res.redirect("/");
+    res.redirect('/');
 });
 module.exports = router;
