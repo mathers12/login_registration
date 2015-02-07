@@ -17,7 +17,7 @@ var partials = require('express-partials');
 
 
 //Mongoose (MongoDB)
-mongoose.connect('mongodb://livemyway.eu:27017/nieco');
+mongoose.connect('mongodb://127.0.0.1:27017/db');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
